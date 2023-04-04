@@ -20,8 +20,11 @@
       return row;
 
     }
+    
+    // var checkbox_all_Items = $("#all-items");
+    // checkbox_all_Items.click( function() {
 
-    $( "#all-items" ).click( function() {
+     $( "#all-items" ).click( function() {
       if($(this).prop("checked" ) == true ){
         $( "tbody :checkbox" ).prop( "checked", true );
       }
@@ -30,7 +33,7 @@
       }      
     });
 
-    $( "tbody :checkbox" ).click(function(){
+    $(document).on('click', 'tbody :checkbox', function(e){
         if($(this).prop("checked" ) == false ){
           $( "#all-items" ).prop( "checked", false );
         }          
@@ -106,6 +109,9 @@
                               circle.removeClass('not-active-circle');
                               circle.addClass('active-circle');
                               tr.find(':checkbox').prop( "checked", false );
+                              $( "#all-items" ).prop( "checked", false );
+
+
                           });
                       }
                       if (selectAction == "Set not active") {
@@ -114,7 +120,8 @@
                               circle = tr.find('i.fa-circle'); 
                               circle.removeClass('active-circle');
                               circle.addClass('not-active-circle'); 
-                              tr.find(':checkbox').prop( "checked", false );      
+                              tr.find(':checkbox').prop( "checked", false ); 
+                              $( "#all-items" ).prop( "checked", false );
                           });
                       } 
 
@@ -242,8 +249,7 @@
                     active_circle = 'not-active-circle';                  
                   }
                   $html = addRow(data.user.id, data.user.name_first, data.user.name_last, data.user.role, active_circle);
-                  $('tbody').append($html);              
-
+                  $('tbody').append($html);
             }
             $('#user-form-modal').modal('hide');            
           }
@@ -271,7 +277,7 @@
                           data.ids.forEach(function(item){
                             $("tr[data-user-id~=" +  item + "]").remove();
                           });
-
+                      $('.select-action option:first-child').prop('selected', true);
                       $('#modal-delete').modal('hide');
 
                     }
