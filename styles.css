@@ -6,7 +6,7 @@ body{
   color: green;
 }
 .not-active-circle {
-  color: red;
+  color: grey;
 }
 .checkbox{
 	font-size: 16px;

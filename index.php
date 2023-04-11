@@ -41,7 +41,7 @@ require_once 'connect.php';
                       </select>
                     </div>
                     <div class="form-group col-md-4 d-flex justify-content-center">
-                      <button type="button" data-toggle="modal"  data-target="#form-modal-alert" class="btn btn-outline-primary px-5 btnOK">OK</button>
+                      <button type="button" data-toggle="modal"  data-target="#modal-alert" class="btn btn-outline-primary px-5 btnOK">OK</button>
                     </div>                                        
                   </div>
                 <form>                 
@@ -111,7 +111,7 @@ require_once 'connect.php';
                       </select>
                     </div>
                     <div class="form-group col-md-4 d-flex justify-content-center">
-                      <button type="button" data-toggle="modal"  data-target="#form-modal-alert" class="btn btn-outline-primary px-5 btnOK">OK</button>
+                      <button type="button" data-toggle="modal"  data-target="#modal-alert" class="btn btn-outline-primary px-5 btnOK">OK</button>
                     </div>                                        
                   </div>
                 <form>                
@@ -167,11 +167,11 @@ require_once 'connect.php';
         </div>
 
         <!-- alert modal  -->
-        <div class="modal fade" tabindex="-1" id="form-modal-alert" role="dialog">
+        <div class="modal fade" tabindex="-1" id="modal-alert" role="dialog">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <!-- <h5 class="modal-title">Modal title</h5> -->
+                <h5 class="modal-title">Warning!</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>
@@ -192,7 +192,7 @@ require_once 'connect.php';
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <!-- <h5 class="modal-title">Modal title</h5> -->
+                <h5 class="modal-title">Warning!</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                   <span aria-hidden="true">&times;</span>
                 </button>

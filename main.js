@@ -21,10 +21,7 @@
 
     }
     
-    // var checkbox_all_Items = $("#all-items");
-    // checkbox_all_Items.click( function() {
-
-     $( "#all-items" ).click( function() {
+    $( "#all-items" ).click( function() {
       if($(this).prop("checked" ) == true ){
         $( "tbody :checkbox" ).prop( "checked", true );
       }
@@ -33,42 +30,49 @@
       }      
     });
 
-    $(document).on('click', 'tbody :checkbox', function(e){
+    $(document).on('click', 'tbody :checkbox', function(){
         if($(this).prop("checked" ) == false ){
           $( "#all-items" ).prop( "checked", false );
-        }          
+        } 
+        if ($( "tbody :checkbox:not(:checked)" ).length === 0) {
+          $( "#all-items" ).prop( "checked", true );
+        } 
     });   
 
 
     $('.checkbox').click(function(){
         $(this).toggleClass('active');  
         if($(this).hasClass('active')){
-
-        $('#checkbox_status').attr('checked','checked');
-         
+          $('#checkbox_status').attr('checked','checked');         
         }else{
           $('#checkbox_status').removeAttr('checked');
-        }
-          
-    }); 
+        }          
+    });
+
 
     $('.btnOK').click( function() {
 
-        var users = $("[id^='item']:checked");
+        // var users = $("[id^='item']:checked");
+        var users = $( "tbody :checkbox:checked" );
      
         if (users.length === 0) {
           $('#modal-body-alert p').text('No users selected');
-          $("#form-modal-alert").modal('show');
+          $("#modal-alert").modal('show');
           return false;
         } 
 
-        var f = $(this).closest(".form-row");
-        var select_action = f.find(".select-action");
+        // var f = $(this).closest(".form-row");
+        // var select_action = f.find(".select-action");
+        // var selectAction =   select_action.find('option:selected').val();
+
+        // var selectAction =$(this).closest(".form-row").find(".select-action option:selected").val();
+
+        var select_action = $(this).closest(".form-row").find(".select-action");
         var selectAction =   select_action.find('option:selected').val();
 
         if (selectAction == '-Please Select-') {
           $('#modal-body-alert p').text('No action is selected in the select box');
-          $("#form-modal-alert").modal('show');
+          $("#modal-alert").modal('show');
           return false;
         }
 
@@ -79,6 +83,7 @@
 
         if (selectAction == 'Delete') {
           $('#btnDelete').attr('data-delete-id', users_arr);
+          $('#modal-delete .modal-body p').text('Are you sure you want to delete the users?');
           $("#modal-delete").modal('show');
 
           return false;
@@ -90,14 +95,14 @@
                   data: {'action': 'update', 'users': users_arr, 'selectAction' : selectAction},
                   dataType: 'html',
                   success: function(data){
-                    
+                    // console.log(data);
                       data = JSON.parse(data);
  
                       if(data.status === false){
                           
                           $('#modal-delete').modal('hide');
                           $('#modal-body-alert p').text(data.error.message);
-                          $("#form-modal-alert").modal('show');                          
+                          $("#modal-alert").modal('show');
                           return false;
                       }                      
 
@@ -111,7 +116,6 @@
                               tr.find(':checkbox').prop( "checked", false );
                               $( "#all-items" ).prop( "checked", false );
 
-
                           });
                       }
                       if (selectAction == "Set not active") {
@@ -124,8 +128,9 @@
                               $( "#all-items" ).prop( "checked", false );
                           });
                       } 
+                    select_action.find('option:first-child').prop('selected', true);
+                    // $('.select-action option:first-child').prop('selected', true);
 
-                    $('.select-action option:first-child').prop('selected', true); 
                     $('#modal-delete').modal('hide');
                   }
         });
@@ -133,11 +138,11 @@
     });
 
 
-    $(".addUser").click(function(){
+    $('.addUser').click(function(){
 
-        $("#UserModalLabel").text('Add user');
-        $("#first-name").val('');
-        $("#last-name").val('');
+        $('#UserModalLabel').text('Add user');
+        $('#first-name').val('');
+        $('#last-name').val('');
         $('.checkbox').removeClass('active'); 
         $('#checkbox_status').removeAttr('checked');
         $('#select-role option').each(function(){
@@ -149,7 +154,7 @@
 
 
       
-    $(document).on('click', '.edit', function(e){
+    $(document).on('click', '.edit', function(){
       
         var editRow = $(this).closest("tr");
         var editId = editRow.data('user-id');
@@ -182,81 +187,80 @@
         });        
    }); 
 
-        $(document).on('click', '.delete-user', function(e){
 
-          var deleteId = $(this).attr('data-delete-user-id');          
-          $('#btnDelete').attr('data-delete-id', deleteId);
-        });
+    $("#btnSave").click(function(){
 
+        var action = $(this).attr('data-action');
+        if( action == 'edit'){
+          var id = $(this).attr('data-user-id');
+        }else{
+          id = null;
+        }
+        var first_name = $('#first-name').val();
+        var last_name = $('#last-name').val();
+        if($(".checkbox").hasClass('active')){
+            var status = true;  
+        }else{
+            status = false; 
+        }
+        var role = $('#select-role').val();
+        $('.msg').removeClass('d-block').addClass('d.none');
 
+        $.ajax({
+              url: 'action.php',
+              method: 'POST',
+              data: {'action': action, 'id': id, 'first_name' : first_name, 'last_name' : last_name, 'status': status, 'role': role},
+              dataType: 'html',
+              success: function(data){
+                  // console.log(data);
+                  data = JSON.parse(data);
+                  if (data.status === false) {
+                      $('.msg').addClass('d-block').html(data.error.message);
+                      return false;
+                  } 
+                  if (action == 'edit') {
+                      var tr  = $("tr[data-user-id=" + data.user.id +"]");
+                      
+                      tr.find('.first-name').text(data.user.name_first);
+                      tr.find('.last-name').text(data.user.name_last);
+                      tr.find('.role span').text( firstUpper(data.user.role) );            
+                      tr.find('.role').data('role', data.user.role);
 
-        $("#btnSave").click(function(){
+                      var circle = tr.find('i.fa-circle');
 
-          var action = $(this).attr('data-action');
-          if( action == 'edit'){
-            var id = $(this).attr('data-user-id');
-          }else{
-            id = null;
-          }
-          var first_name = $('#first-name').val();
-          var last_name = $('#last-name').val();
-
-          if($(".checkbox").hasClass('active')){
-              var status = true;  
-          }else{
-              status = false; 
-          }
-
-          var role = $('#select-role').val();
-
-          $('.msg').removeClass('d-block').addClass('d.none');
-
-          $.ajax({
-          url: 'action.php',
-          method: 'POST',
-          data: {'action': action, 'id': id, 'first_name' : first_name, 'last_name' : last_name, 'status': status, 'role': role},
-          dataType: 'html',
-          success: function(data){
-
-            data = JSON.parse(data);
-
-            if (data.status === false) {
-                $('.msg').addClass('d-block').html(data.error.message);
-                return false;
-            }             
-
-            if (action == 'edit') {
-                var tr  = $("tr[data-user-id=" + data.user.id +"]");
-                
-                tr.find('.first-name').text(data.user.name_first);
-                tr.find('.last-name').text(data.user.name_last);
-                tr.find('.role span').text( firstUpper(data.user.role) );            
-                tr.find('.role').data('role', data.user.role);
-
-                var circle = tr.find('i.fa-circle');
-
-                if(data.user.status === true){
-                  circle.removeClass('not-active-circle');
-                  circle.addClass('active-circle');
-                }else{
-                  circle.removeClass('active-circle');
-                  circle.addClass('not-active-circle');
-                }
-              }else{
-                  if(data.user.status === true){
-                    var active_circle =  'active-circle';
-                  }else{
-                    active_circle = 'not-active-circle';                  
+                      if(data.user.status === true){
+                        circle.removeClass('not-active-circle');
+                        circle.addClass('active-circle');
+                      }else{
+                        circle.removeClass('active-circle');
+                        circle.addClass('not-active-circle');
+                      }
+                    }else{
+                        if(data.user.status === true){
+                          var active_circle =  'active-circle';
+                        }else{
+                          active_circle = 'not-active-circle';                  
+                        }
+                        $html = addRow(data.user.id, data.user.name_first, data.user.name_last, data.user.role, active_circle);
+                        $('tbody').append($html);
                   }
-                  $html = addRow(data.user.id, data.user.name_first, data.user.name_last, data.user.role, active_circle);
-                  $('tbody').append($html);
-            }
-            $('#user-form-modal').modal('hide');            
-          }
-          });
+                  $('#user-form-modal').modal('hide');            
+              }
         });
+    });
 
-        $("#btnDelete").click(function(){   
+
+    $(document).on('click', '.delete-user', function(){
+
+        var deleteId = $(this).attr('data-delete-user-id');
+        $('#btnDelete').attr('data-delete-id', deleteId);
+        var tr = $(this).closest("tr");
+        $('#modal-delete .modal-body p').text('Are you sure you want to delete the user ' + tr.find('.first-name').text() + ' ' + tr.find('.last-name').text() +'?');        
+
+    });
+
+
+    $("#btnDelete").click(function(){   
           
           var ids = $(this).attr('data-delete-id');
           $.ajax({
@@ -265,28 +269,31 @@
                     data: {'action': 'delete', 'ids' : ids},
                     dataType: 'html',
                     success: function(data){
+                      // console.log(data);
                       data = JSON.parse(data);                      
-                      if(data.status === false){
-                          
-                          $('#modal-delete').modal('hide');
-                          $('#modal-body-alert p').text(data.error.message);
-                          $("#form-modal-alert").modal('show');                          
-                          return false;
-                      }
-                      
-                          data.ids.forEach(function(item){
-                            $("tr[data-user-id~=" +  item + "]").remove();
-                          });
-                      $('.select-action option:first-child').prop('selected', true);
-                      $('#modal-delete').modal('hide');
+                        if(data.status === false){
+                            
+                            $('#modal-delete').modal('hide');
+                            $('#modal-body-alert p').text(data.error.message);
+                            $("#modal-alert").modal('show');                          
+                            return false;
+                        }
+                        
+                            data.ids.forEach(function(item){
+                              $("tr[data-user-id~=" +  item + "]").remove();
+                            });
+                        $('.select-action option:first-child').prop('selected', true);
+                        $('#modal-delete').modal('hide');
 
                     }
           });
-        });
+    });
 
-        $('#user-form-modal').on('hidden.bs.modal', function () {
-            $('.msg').removeClass('d-block').addClass('d.none');
-        })
-
+    $('#user-form-modal').on('hidden.bs.modal', function () {
+        $('.msg').removeClass('d-block').addClass('d.none');
+    });
+    $('#modal-alert').on('hidden.bs.modal', function () {
+        $('.select-action option:first-child').prop('selected', true);
+    });
 
 });

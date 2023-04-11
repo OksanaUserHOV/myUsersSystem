@@ -1,6 +1,31 @@
 <?php 
 require_once 'connect.php';
 
+function existId($ids, $place_holders='', $count_ids=1){
+	
+	global $pdo;
+
+	if( $count_ids > 1){
+		$qwery = $pdo->prepare("SELECT 1 FROM users WHERE id IN ($place_holders)" );
+		$qwery->execute($ids);
+
+	}else{
+
+		$qwery = $pdo->prepare("SELECT 1 FROM users WHERE id = ? LIMIT 1");
+		$qwery->execute($ids);
+		
+	}
+	if ( $qwery->rowCount() < $count_ids ) {
+
+			$error = 'Error ID';
+			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
+			echo json_encode($res);
+		return false;
+	}
+	return true;
+
+}
+
 if ($_POST['action'] == 'add') {
 
 	$name_first = trim($_POST['first_name']);
@@ -34,7 +59,7 @@ if ($_POST['action'] == 'add') {
 		echo json_encode($res);		
 		exit();
 	}else{
-		try {
+
 			$sql = 'INSERT INTO users (name_first, name_last, status, role) VALUES (:name_first, :name_last, :status, :role)';  
 	  		$insert = $pdo->prepare($sql);
 
@@ -56,14 +81,6 @@ if ($_POST['action'] == 'add') {
 								]	
 					];
 			echo json_encode($res);
-			
-
-		} catch (Exception $e) {
-				$error = 'Error';
-				$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
-				echo json_encode($res);
-		}	
-
 	}
 }
  
@@ -93,44 +110,46 @@ if ($_POST['action'] == 'edit'){
 	if ($role == '-Please Select-') {
 		$msg .= 'Select role';		
 	}
-	if ( $msg !=='' ) {	
 
-		$error = ['code' => 100, 'message' => $msg];
-		$res = ['status' => false, 'error' => $error];
-		echo json_encode($res);		
-		exit();
-	}else{
-		try {
-			$edit = $pdo->prepare( "UPDATE users
-									SET name_first = :name_first, 
-										name_last = :name_last,
-										status = :status,
-										role = :role
-								 	WHERE id = :id");
 
-			$edit->execute([
-							'name_first' =>	$name_first,
-							'name_last' =>	$name_last,
-							'status' =>	$status_active,
-							'role' => $role,
-							'id' => $id
-						]);
-			$res = ['status' => true, 'error' => null, 
-					'user' => [	'id' => $id,
-									'name_first' => $name_first,
-									'name_last' => $name_last,
-									'status' => (bool)$status_active,
-									'role' => $role
-								]	
-					];
-			echo json_encode($res);
-		
-		} catch (Exception $e) {
-			$error = 'Error';
-			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
-			echo json_encode($res);
-		}		
-	}
+	// if (!existId($id)) {
+	// 	exit();
+	// }
+	if (existId([$id])) {
+		if ( $msg !=='' ) {	
+			$error = ['code' => 100, 'message' => $msg];
+			$res = ['status' => false, 'error' => $error];
+			echo json_encode($res);		
+			exit();
+
+		}else{
+			
+				$edit = $pdo->prepare( "UPDATE users
+										SET name_first = :name_first, 
+											name_last = :name_last,
+											status = :status,
+											role = :role
+									 	WHERE id = :id");
+
+				$edit->execute([
+								'name_first' =>	$name_first,
+								'name_last' =>	$name_last,
+								'status' =>	$status_active,
+								'role' => $role,
+								'id' => $id
+							]);
+				$res = ['status' => true, 'error' => null, 
+						'user' => [	'id' => $id,
+										'name_first' => $name_first,
+										'name_last' => $name_last,
+										'status' => (bool)$status_active,
+										'role' => $role
+									]	
+						];
+				echo json_encode($res);	
+					
+		}
+	}	
 }
 
 
@@ -139,51 +158,42 @@ if ($_POST['action'] == 'delete'){
 	if ($pos !== false) {
 		$ids_str = str_replace('item-', '', $_POST['ids']);
 		$ids = explode(",", $ids_str);
+		$count = count($ids);
+		$place_holders = implode(',', array_fill(0, $count, '?'));
 
-		$place_holders = implode(',', array_fill(0, count($ids), '?'));
-
-		try {
+		if (existId($ids, $place_holders, $count)){
 			$delete = $pdo->prepare("DELETE FROM users WHERE id IN ($place_holders)");
 			$delete->execute($ids);
 			
 			$res = ['status' => true, 'error' => null, 
 					'ids' => $ids ]; 
-			echo json_encode($res);
-						
-		} catch (Exception $e) {
-			$error = 'Error';
-			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
-			echo json_encode($res);
+			echo json_encode($res);			
 		}
-	}else{
 
-		try {
+	}else{
+		$ids =[$_POST['ids']];
+		if (existId($ids)) {
+		
 			$delete = $pdo->prepare("DELETE FROM users WHERE id = ?");
 			$delete->execute([ $_POST['ids'] ]);	
 			
 			$res = ['status' => true, 'error' => null, 
 					'ids' => [ $_POST['ids'] ] ];
 			echo json_encode($res);
-
-		} catch (Exception $e) {
-		
-			$error = 'Error';
-			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error]  ]; 
-			echo json_encode($res);
 		}
+
 	}
 }
 
 if ($_POST['action'] == 'update'){
-
 	$ids = str_replace('item-', '', $_POST['users']);
+	$count = count($ids);
+	$place_holders = implode(',', array_fill(0, $count, '?'));
 
-	$place_holders = implode(',', array_fill(0, count($ids), '?'));
+	if (existId($ids, $place_holders, $count)) {
+		if ($_POST['selectAction'] == 'Set active'){
 
-
-	if ($_POST['selectAction'] == 'Set active'){
-
-		try {
+	
 			$update = $pdo->prepare( "UPDATE users
 									SET status = ?
 								 	WHERE id IN ($place_holders)");
@@ -194,17 +204,9 @@ if ($_POST['action'] == 'update'){
 
 			$res = ['status' => true, 'error' => null, 'ids' => $ids ]; 
 			echo json_encode($res);
-
-		} catch (Exception $e) {
-			$error = 'Error';
-			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
-			echo json_encode($res);
 		}
-	}
 
-	if ($_POST['selectAction'] == 'Set not active'){
-
-		try {
+		if ($_POST['selectAction'] == 'Set not active'){
 
 			$update = $pdo->prepare( "UPDATE users
 									SET status = ?
@@ -216,10 +218,7 @@ if ($_POST['action'] == 'update'){
 
 			$res = ['status' => true, 'error' => null, 'ids' => $ids ]; 
 			echo json_encode($res);
-		} catch (Exception $e) {
-			$error = 'Error';
-			$res = ['status' => false, 'error' => ['code' => 100, 'message' => $error] ]; 
-			echo json_encode($res);
+		
 		}		
 	}
 }
